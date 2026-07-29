@@ -1,3 +1,4 @@
+# Sample function to demonstrate mutable default arguments in Python.
 def add_tag(name, tags=None):
     if tags is None:
         tags = []
@@ -56,14 +57,82 @@ def slugify_with_hints(name: str, separator: str = "-") -> str:
     return cleaned.replace(" ", separator)
 
 
-print(slugify("  Python is Awesome!  "))  # Output: python-is-awesome!
-print(slugify("Python is Awesome!", separator="_"))  # Output:python_is_awesome!
-print(slugify_with_hints("Slugify With Hints"))  # Output: slugify-with-hints
-# Type hints are not enforced at runtime. Hence, the following call will not
-# raise an error, but it may lead to unexpected behavior or runtime errors.
-# print(slugify_with_hints(1, 3))
+def project_function(name, *, description=None, tags=None):
+    """
+    A sample function to demonstrate the use of keyword-only arguments.
+    The `*` in the parameter list indicates that all following parameters
+    must be specified as keyword arguments. The parameters before the `*`
+    can be specified positionally or as keywords.
+    """
+    if tags is None:
+        tags = []
+    return {"name": name, "description": description, "tags": tags}
 
-print(add_tag("python"))  # Output: ['python']
-print(add_tag("javascript"))  # Output: ['javascript']
-print(add_tag_with_default("python"))  # Output: ['python']
-print(add_tag_with_default("javascript"))  # Output: ['python', 'javascript']
+
+def project_function_with_kwargs(name, **kwargs):
+    """
+    A sample function to demonstrate the use of keyword arguments.
+    The `**kwargs` allows you to pass a variable number of keyword arguments
+    to the function. These arguments are captured in a dictionary.
+    """
+    return {"name": name, **kwargs}
+
+
+def full_spec(p1, /, p_or_k=2, *, k_only=3, **kwargs):
+    #           ^          ^        ^
+    #     Pos-Only    Pos-or-KW   KW-Only
+    """
+    This function demonstrates the use of positional-only, positional-or-
+    keyword, and keyword-only parameters in Python. The `/` indicates that all
+    parameters before it are positional-only, while the `*` indicates that all
+    parameters after it are keyword-only. The `**kwargs` allows for additional
+    keyword arguments.
+    """
+    pass
+
+
+def any_pos_or_kw(*args, **kwargs):
+    """
+    This function demonstrates the use of arbitrary positional and keyword
+    arguments. The `*args` allows for any number of positional arguments, while
+    the `**kwargs` allows for any number of keyword arguments. Both are captured
+    in tuples and dictionaries, respectively.
+    """
+    pass
+
+
+if __name__ == "__main__":
+    print(slugify("  Python is Best!  "))  # Output: python-is-best!
+    print(slugify("Python is Best!", separator="_"))  # Output:python_is_best!
+    print(slugify_with_hints("Hello World"))  # Output: hello-world
+
+    # Type hints are not enforced at runtime. Hence, the following call will not
+    # raise an error, but it may lead to unexpected behavior or runtime errors.
+    # print(slugify_with_hints(1, 3))
+
+    print(add_tag("python"))  # Output: ['python']
+    print(add_tag("java"))  # Output: ['java']
+
+    print(add_tag_with_default("python"))  # Output: ['python']
+    print(add_tag_with_default("java"))  # Output: ['python', 'java']
+
+    print(
+        project_function(
+            "My Project",
+            description="A sample project",
+            tags=["python", "sample"],
+        )
+    )
+
+    # The following call will raise a TypeError because `description` and `tags`
+    # are keyword-only arguments and must be specified as such.
+    # print(project_function("My Project", "A sample project", ["python"]))
+
+    print(
+        project_function_with_kwargs(
+            "My Project",
+            description="A sample project",
+            tags=["python", "sample"],
+            anything_else="This is a test",
+        )
+    )
