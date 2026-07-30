@@ -7,6 +7,10 @@ Generators, Introspection, Recursion Limits, Callables (__call__), Decorators
 Generators, Context Managers, Overloading, and Single Dispatch.
 """
 
+# In Python, functions are just objects (like strings or integers).
+# You can assign them to variables, pass them as arguments to other functions,
+# and return them from functions.
+
 import asyncio
 import functools
 import inspect
@@ -21,6 +25,9 @@ from typing import Callable, Union, overload
 # ==========================================
 
 
+# Defaults are evaluated once, when the function is defined.
+# Don't use a mutable object like a list or dict as a default value.
+# Sample function to demonstrate mutable default arguments in Python.
 def add_tag(name, tags=None):
     if tags is None:
         tags = []
@@ -28,6 +35,12 @@ def add_tag(name, tags=None):
     return tags
 
 
+# This function demonstrates the use of a mutable default argument.
+# If you call this function multiple times without providing the `tags`
+# argument, it will keep appending to the same list, which can lead to
+# unexpected behavior. So, it's generally recommended to use `None` as the
+# default value and create a new collection inside the function if needed,
+# as shown in the `add_tag` function above.
 def add_tag_with_default(name, tags=[]):
     """Mutable default argument trap."""
     tags.append(name)
@@ -35,11 +48,31 @@ def add_tag_with_default(name, tags=[]):
 
 
 def slugify(text, separator="-"):
+    """
+    Converts a string into a URL-friendly slug.
+    Example: "Hello World!" -> "hello-world"
+    """
     text = text.lower().strip()
     return text.replace(" ", separator)
 
 
+"""
+        This acts as a multiline comment.
+        Python will parse this as a string, but since it isn't assigned 
+        to a variable, it gets discarded at execution time.
+"""
+
+
+# Function parameters and return values can carry type hints.
+# They don't change runtime behavior, but they document intent and let editors
+# and type checkers catch bugs before the code runs.
 def slugify_with_hints(name: str, separator: str = "-") -> str:
+    # This is a comment which will be ignored by the Python interpreter.
+    """
+    This is a docstring for the slugify_with_hints function.
+    It provides information about the function's purpose, parameters,
+    and return type.
+    """
     cleaned = name.strip().lower()
     return cleaned.replace(" ", separator)
 
@@ -50,20 +83,47 @@ def slugify_with_hints(name: str, separator: str = "-") -> str:
 
 
 def project_function(name, *, description=None, tags=None):
+    """
+    A sample function to demonstrate the use of keyword-only arguments.
+    The `*` in the parameter list indicates that all following parameters
+    must be specified as keyword arguments. The parameters before the `*`
+    can be specified positionally or as keywords.
+    """
     if tags is None:
         tags = []
     return {"name": name, "description": description, "tags": tags}
 
 
 def project_function_with_kwargs(name, **kwargs):
+    """
+    A sample function to demonstrate the use of keyword arguments.
+    The `**kwargs` allows you to pass a variable number of keyword arguments
+    to the function. These arguments are captured in a dictionary.
+    """
     return {"name": name, **kwargs}
 
 
+# If a function reaches the end without hitting a return, it returns None.
 def full_spec(p1, /, p_or_k=2, *, k_only=3, **kwargs):
+    #           ^          ^        ^
+    #     Pos-Only    Pos-or-KW   KW-Only
+    """
+    This function demonstrates the use of positional-only, positional-or-
+    keyword, and keyword-only parameters in Python. The `/` indicates that all
+    parameters before it are positional-only, while the `*` indicates that all
+    parameters after it are keyword-only. The `**kwargs` allows for additional
+    keyword arguments.
+    """
     pass
 
 
 def any_pos_or_kw(*args, **kwargs):
+    """
+    This function demonstrates the use of arbitrary positional and keyword
+    arguments. The `*args` allows for any number of positional arguments, while
+    the `**kwargs` allows for any number of keyword arguments. Both are captured
+    in tuples and dictionaries, respectively.
+    """
     return f"Args: {args}, Kwargs: {kwargs}"
 
 
@@ -72,11 +132,17 @@ def any_pos_or_kw(*args, **kwargs):
 # ==========================================
 
 
+# Functions in Python are first-class citizens, meaning they can be passed
+# around as arguments, returned from other functions, and assigned to variables.
 def apply_operation(x, y, operation_func):
     return operation_func(x, y)
 
 
-multiply_lambda = lambda a, b: a * b
+# Lambdas are anonymous functions that can be defined in a single line.
+# Syntax: lambda arguments: expression. They are often used for short, throwaway
+# functions. However, for more complex operations or assigning to a variable,
+# it's better to define a regular function.
+multiply_lambda = lambda a, b: a * b  # noqa: E731
 
 
 # ==========================================
@@ -86,13 +152,18 @@ multiply_lambda = lambda a, b: a * b
 GLOBAL_STATE = "I am a global variable"
 
 
+# By default, Python functions can read variables from the global scope, but
+# they cannot modify them unless explicitly declared as global. The `nonlocal`
+# keyword allows a nested function to modify a var from its enclosing scope.
 def scope_demonstrator():
+    # global allows us to modify the global variable from within this function.
     global GLOBAL_STATE
     GLOBAL_STATE = "Global variable modified by scope_demonstrator!"
 
     counter = 0
 
     def increment_closure():
+        # nonlocal allows us to modify the variable from the enclosing scope
         nonlocal counter
         counter += 1
         return counter
@@ -105,6 +176,10 @@ def scope_demonstrator():
 # ==========================================
 
 
+# Generators are a special type of iterator that allow you to iterate over data
+# without storing the entire dataset in memory. They are defined using the
+# `yield` keyword, which allows the function to return a value and pause its
+# execution, resuming from that point when the next value is requested.
 def countdown_generator(start):
     print(f"Starting countdown from {start}...")
     while start > 0:
@@ -162,7 +237,8 @@ def factorial(n):
 
 
 # @lru_cache saves the results of expensive function calls.
-# If we call this again with the same arguments, it returns the cached result instantly.
+# If we call this again with the same arguments, it returns the cached result
+# instantly. maxsize=128 means it will cache the last 128 unique calls.
 @functools.lru_cache(maxsize=128)
 def expensive_fibonacci(n):
     if n < 2:
@@ -174,7 +250,9 @@ def power(base, exponent):
     return base**exponent
 
 
-# functools.partial creates a new function with some arguments pre-filled
+# functools.partial creates a new function with some arguments pre-filled.
+# This is useful for creating specialized versions of a function without
+# rewriting it.
 square = functools.partial(power, exponent=2)
 cube = functools.partial(power, exponent=3)
 
@@ -184,6 +262,9 @@ cube = functools.partial(power, exponent=3)
 # ==========================================
 
 
+# async functions are defined with the `async` keyword. They allow you to write
+# code that can pause and resume, making it easier to handle I/O-bound tasks
+# like network requests or file operations without blocking the entire program.
 async def fetch_data(id):
     """
     An asynchronous function. The 'await' keyword pauses this function,
@@ -197,6 +278,9 @@ async def fetch_data(id):
     return {"id": id, "data": "Sample JSON data"}
 
 
+# Note: async functions return a coroutine object when called. To actually run
+# them, you need to use an event loop, which is what asyncio.run() does.
+# asyncio.run() is used to run the main async function in a synchronous context.
 async def main_async_runner():
     """
     Runs multiple async tasks concurrently.
@@ -259,24 +343,28 @@ secret_function.version = 1.2  # type: ignore[attr-defined]
 def demonstrate_introspection():
     """
     The 'inspect' module lets Python look at its own code at runtime.
-    You can analyze signatures, read docstrings, and even see the raw source code.
+    You can analyze signatures, read docstrings, and even see the raw source
+    code.
     """
     # 1. Read custom attributes
     print(f"Function Author: {secret_function.author}")  # type: ignore[attr-defined]
     # Ideal way to access attributes is using getattr() to avoid AttributeError
-    print(f"Function Author: {getattr(secret_function, 'author', 'Unknown')}")
+    # print(f"Function Author: {getattr(secret_function, 'author', 'Unknown')}")
 
     # 2. Inspect the signature programmatically
     sig = inspect.signature(secret_function)
     print(f"Signature: {sig}")
     for name, param in sig.parameters.items():
         print(
-            f" - Param: {name}, Default: {param.default}, Type: {param.annotation}"
+            f"- Param: {name}, Default: {param.default}, "
+            f"Type: {param.annotation}"
         )
 
     # 3. Check what kind of function it is
     print(
-        f"Is interactive_generator a generator? {inspect.isgeneratorfunction(interactive_generator)}"
+        f"Is interactive_generator a generator? {
+            inspect.isgeneratorfunction(interactive_generator)
+        }"
     )
 
 
@@ -306,8 +394,8 @@ def demonstrate_recursion_limit():
 class RateLimiter:
     """
     By defining the __call__ magic method, you can make an instance of a class
-    behave exactly like a function. This is incredibly useful when your "function"
-    needs to remember complex state across multiple calls.
+    behave exactly like a function. This is incredibly useful when your
+    "function" needs to remember complex state across multiple calls.
     """
 
     def __init__(self, max_calls):
@@ -333,8 +421,8 @@ def timer_decorator(func):
     and returns a new function (a closure) without altering the original code.
     """
 
-    # @functools.wraps ensures the original function's name and docstring are preserved.
-    # If we don't use this, introspection (like we learned in section 11) will break!
+    # @functools.wraps ensures the original function's name and docstring are
+    # preserved. If we don't use this, introspection will break!
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
@@ -367,8 +455,9 @@ def slow_greeting(name):
 
 class CountCalls:
     """
-    Because a class with __call__ acts like a function, we can use it AS a decorator!
-    This is much cleaner than using `global` or `nonlocal` for a decorator's state.
+    Because a class with __call__ acts like a function, we can use it AS a
+    decorator! This is much cleaner than using `global` or `nonlocal` for a
+    decorator's state.
     """
 
     def __init__(self, func):
@@ -395,7 +484,8 @@ def say_hi():
 def repeat(num_times):
     """
     To pass arguments to a decorator, you need an outer function that takes
-    the arguments, which returns the actual decorator, which returns the wrapper!
+    the arguments, which returns the actual decorator, which returns
+    the wrapper!
     """
 
     def decorator_repeat(func):
@@ -439,8 +529,8 @@ def execute_math_callback(
 
 async def async_countdown():
     """
-    Combines async/await with yield.
-    Useful for streaming data over a network where each chunk takes time to fetch.
+    Combines async/await with yield. Useful for streaming data over a network
+    where each chunk takes time to fetch.
     """
     for i in range(3, 0, -1):
         await asyncio.sleep(0.5)  # Simulate network delay
@@ -470,7 +560,8 @@ def temporary_file_editor(filename):
     print(f"\n[Context] Opening {filename}...")
     # Yield passes control (and optionally data) to the 'with' block
     yield f"--- Data inside {filename} ---"
-    # This runs automatically when the 'with' block finishes, even if it crashes!
+    # This runs automatically when the 'with' block finishes,
+    # even if it crashes!
     print(f"[Context] Safely closing {filename}...")
 
 
@@ -529,12 +620,37 @@ def _(arg: list):
 
 if __name__ == "__main__":
     print("--- 1. Basics ---")
-    print(slugify("  Python is Best!  "))
+    print(slugify("  Python is Best!  "))  # Output: python-is-best!
+    print(slugify("Python is Best!", separator="_"))  # Output:python_is_best!
+    print(slugify_with_hints("Hello World"))  # Output: hello-world
+
+    # Type hints are not enforced at runtime. Hence, the following call will not
+    # raise an error, but it may lead to unexpected behavior or runtime errors.
+    # print(slugify_with_hints(1, 3))
+
+    print(add_tag("python"))  # Output: ['python']
+    print(add_tag("java"))  # Output: ['java']
+
+    print(add_tag_with_default("python"))  # Output: ['python']
+    print(add_tag_with_default("java"))  # Output: ['python', 'java']
 
     print("\n--- 2. Advanced Arguments ---")
     print(
         project_function(
             "My Project", description="A sample project", tags=["python"]
+        )
+    )
+
+    # The following call will raise a TypeError because `description` and `tags`
+    # are keyword-only arguments and must be specified as such.
+    # print(project_function("My Project", "A sample project", ["python"]))
+
+    print(
+        project_function_with_kwargs(
+            "My Project",
+            description="A sample project",
+            tags=["python", "sample"],
+            anything_else="This is a test",
         )
     )
 
@@ -544,8 +660,11 @@ if __name__ == "__main__":
     )
 
     print("\n--- 4. Scope and Closures ---")
-    my_counter = scope_demonstrator()
+    print(f"Global state before: {GLOBAL_STATE}")
+    my_counter = scope_demonstrator()  # This modifies the global variable
     print(f"Closure call 1: {my_counter()}")
+    print(f"Closure call 2: {my_counter()}")
+    print(f"Global state after: {GLOBAL_STATE}")
 
     print("\n--- 5. Generators ---")
     for number in countdown_generator(2):
@@ -561,7 +680,8 @@ if __name__ == "__main__":
     print(f"Factorial of 5: {factorial(5)}")
 
     print("\n--- 8. functools Module ---")
-    # Notice how fast this is with lru_cache! Without it, fibonacci(35) takes seconds.
+    # Notice how fast this is with lru_cache!
+    # Without it, fibonacci(35) takes seconds.
     print(f"Fibonacci of 35 (Cached): {expensive_fibonacci(35)}")
 
     # Using our partial functions

@@ -10,7 +10,11 @@ def main():
     print(bool(108989))  # True
     print(bool(0))  # False
     print(bool(1) + bool(1) + bool(1))  # 3
+    # These values are falsy: False, None, 0, "" (empty string),
+    # empty lists, empty dictionaries, empty sets, and empty tuples
     print(bool(""), bool([]), bool({}), bool(None))  # False False False False
+    # Truthiness is useful, but be careful when the distinction between None,
+    # "", and False matters.
 
     print(int(True))  # 1
     print(float("234.897"))  # 234.897
