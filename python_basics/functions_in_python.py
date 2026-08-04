@@ -66,6 +66,7 @@ def slugify(text, separator="-"):
 # Function parameters and return values can carry type hints.
 # They don't change runtime behavior, but they document intent and let editors
 # and type checkers catch bugs before the code runs.
+# Return None explicitly if no return statement is present.
 def slugify_with_hints(name: str, separator: str = "-") -> str:
     # This is a comment which will be ignored by the Python interpreter.
     """

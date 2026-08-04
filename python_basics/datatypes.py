@@ -49,6 +49,23 @@ def main():
     print(Decimal("0.1") + Decimal("0.2"))  # 0.3 (Decimal)
     print(Fraction(1, 3))  # 1/3 (Fraction)
 
+    # =========================
+    # Type Hints for Variable Declarations
+    # =========================
+    # Type hints are optional and do not enforce type checking at runtime.
+    # They are primarily used for static type checking and code readability.
+    # Example of type hints for variable declarations
+    my_int: int = 10
+    my_float: float = 20.5
+    my_str: str = "Hello"
+    print(f"Type hints: {my_int}, {my_float}, {my_str}")
+
+    # Type hint with union operator (Python 3.10+)
+    # Union type hint indicates that the variable can be of multiple types.
+    # Any number of types can be combined using the | operator.
+    my_var: int | float = 15  # Can be either int or float
+    print(f"Union type hint: {my_var} (type: {type(my_var)})")
+
 
 if __name__ == "__main__":
     main()

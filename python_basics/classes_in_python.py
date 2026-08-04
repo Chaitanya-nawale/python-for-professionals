@@ -9,6 +9,10 @@ import functools
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
+# Note: 'Self' requires Python 3.11+. For older versions, use:
+# from typing import TypeVar; Self = TypeVar('Self', bound='ClassName')
+from typing import ClassVar, Generic, Protocol, Self, TypeVar
+
 # Python has two common shapes for grouping data and behavior together.
 # For typed data, reach for a dataclass first. For classes with more substantial
 # logic or full control over construction, write a regular class.
@@ -601,6 +605,164 @@ class SecretAgent:
 
 
 # =====================================================================
+# SECTION 16: Context Managers (__enter__ and __exit__)
+# =====================================================================
+
+# In Python, we don't rely on __del__ to close files, network sockets,
+# or database connections because the Garbage Collector is unpredictable.
+# Instead, we use the Context Manager protocol.
+
+
+class DatabaseConnectionWithContextManager:
+    """
+    Demonstrates safe resource handling using the 'with' statement.
+    """
+
+    def __init__(self, db_url: str):
+        self.db_url = db_url
+        self.connected = False
+
+    def __enter__(self) -> Self:
+        """
+        Runs exactly when the 'with' block begins.
+        Typically used to acquire the resource or lock.
+        Whatever is returned here gets assigned to the 'as' variable.
+        """
+        print(f"[DB] Connecting to {self.db_url}...")
+        self.connected = True
+        return (
+            self  # We return 'self' so we can call methods on it in the block
+        )
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+        """
+        Runs exactly when the 'with' block ends, NO MATTER WHAT.
+        Even if a crash (exception) happens inside the block, this will run.
+
+        Args:
+            exc_type: The class of the exception (e.g., ValueError)
+            exc_val: The actual exception instance
+            exc_tb: The traceback object
+        """
+        print("[DB] Safely closing connection and cleaning up resources...")
+        self.connected = False
+
+        if exc_type is not None:
+            print(
+                f"[DB] Intercepted an exception: {exc_type.__name__}: {exc_val}"
+            )
+
+            # If we return True, we "swallow" the exception. It will not crash
+            # the rest of the program. If we return False (or None), the
+            # exception propagates and crashes.
+            if issubclass(exc_type, ConnectionError):
+                print("[DB] Handled a known network glitch gracefully.")
+                return True
+
+        return False
+
+
+# =====================================================================
+# SECTION 17: Advanced Type Hinting - Protocols (Duck Typing)
+# =====================================================================
+
+# In your previous script, you used ABCs (Abstract Base Classes).
+# ABCs require "Nominal Subtyping" (the child MUST explicitly inherit the ABC).
+# Protocols allow "Structural Subtyping" (Duck Typing). If it walks like a duck
+# and quacks like a duck, the Type Checker accepts it—no inheritance required!
+
+
+class LoggerProtocol(Protocol):
+    """
+    Any class that implements a `log(message: str)` method automatically
+    satisfies this protocol. No need to inherit from it!
+    """
+
+    def log(self, message: str) -> None: ...
+
+
+class ConsoleLogger:
+    # Notice: NO inheritance from LoggerProtocol here!
+    def log(self, message: str) -> None:
+        print(f"[Console]: {message}")
+
+
+class FileLogger:
+    def log(self, message: str) -> None:
+        print(f"[File]: Writing '{message}' to disk...")
+
+
+def process_data(logger: LoggerProtocol):
+    """
+    This function accepts ANYTHING that has a .log() method matching
+    the Protocol.
+    """
+    logger.log("Data processing started...")
+
+
+# =====================================================================
+# SECTION 18: Advanced Type Hinting - Generics (TypeVar & Generic)
+# =====================================================================
+
+# Sometimes you write classes that handle collections of things, but you want
+# the type checker to know exactly what is inside the collection.
+
+T = TypeVar("T")  # 'T' stands for any Type (int, str, CustomClass, etc.)
+
+
+class Stack(Generic[T]):
+    """
+    A generic Stack data structure. When instantiated, the user can define
+    what 'T' is (e.g., Stack[int] or Stack[str]).
+    """
+
+    def __init__(self) -> None:
+        self._items: list[T] = []
+
+    def push(self, item: T) -> None:
+        self._items.append(item)
+
+    def pop(self) -> T:
+        return self._items.pop()
+
+
+# =====================================================================
+# SECTION 19: Advanced Type Hinting - ClassVar & Self
+# =====================================================================
+
+
+@dataclass
+class QueryBuilder:
+    """
+    Demonstrates ClassVar (distinguishing class attributes from instance fields)
+    and Self (perfect for method chaining/fluid interfaces).
+    """
+
+    # ClassVar tells type checkers and dataclasses that this is a
+    # CLASS attribute. Dataclasses will NOT expect this in
+    # the __init__ constructor.
+    max_queries_allowed: ClassVar[int] = 100
+
+    table: str
+    _filters: list[str] = field(default_factory=list)
+
+    def where(self, condition: str) -> Self:
+        """
+        Returning 'Self' tells the type checker this method returns the exact
+        instance type, enabling flawless IDE autocomplete
+        during method chaining.
+        """
+        self._filters.append(condition)
+        return self
+
+    def build(self) -> str:
+        base = f"SELECT * FROM {self.table}"
+        if self._filters:
+            base += " WHERE " + " AND ".join(self._filters)
+        return base
+
+
+# =====================================================================
 # DEMONSTRATION & RUNTIME EXECUTIONS
 # =====================================================================
 
@@ -773,3 +935,44 @@ if __name__ == "__main__":
     agent = SecretAgent()
     print("When you type 'agent.' in an IDE, it will only suggest:")
     print(dir(agent))
+
+    print("\n--- 16. Context Managers ---")
+
+    # Scenario A: Normal execution
+    with DatabaseConnectionWithContextManager(
+        "postgresql://localhost:5432/main"
+    ) as db:
+        print(f"Are we connected inside the block? {db.connected}")
+        print("Doing some database queries...")
+    print(f"Are we connected outside the block? {db.connected}\n")
+
+    # Scenario B: Exception handling inside the Context Manager
+    print("Trying a failing block: ")
+    with DatabaseConnectionWithContextManager(
+        "postgresql://localhost:5432/main"
+    ) as db:
+        print("About to trigger a simulated network drop...")
+        raise ConnectionError("Connection dropped suddenly!")
+    print("Program continued running because __exit__ returned True!\n")
+
+    print("--- 17. Protocols (Duck Typing) ---")
+    # Both pass the type checker perfectly despite no shared base class
+    process_data(ConsoleLogger())
+    process_data(FileLogger())
+
+    print("\n--- 18. Generics ---")
+    # We tell the type checker this stack ONLY holds strings
+    word_stack = Stack[str]()
+    word_stack.push("Hello")
+    word_stack.push("World")
+    # word_stack.push(42)  <-- MyPy or your IDE would flag this as an error!
+    print(f"Popped from stack: {word_stack.pop()}")
+
+    print("\n--- 19. Self & ClassVar ---")
+    # Notice we don't pass 'max_queries_allowed', because it's a ClassVar
+    query = QueryBuilder(table="users")
+
+    # Method chaining made type-safe by returning 'Self'
+    sql = query.where("age > 18").where("status = 'active'").build()
+    print(f"Generated SQL: {sql}")
+    print(f"Class-level max queries: {QueryBuilder.max_queries_allowed}")
