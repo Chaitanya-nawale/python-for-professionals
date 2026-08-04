@@ -556,6 +556,7 @@ def temporary_file_editor(filename):
     This allows a normal function to be used with the 'with' statement.
     Everything before 'yield' is the setup (__enter__).
     Everything after 'yield' is the cleanup (__exit__).
+    Your generator function must yield exactly once.
     """
     print(f"\n[Context] Opening {filename}...")
     # Yield passes control (and optionally data) to the 'with' block
