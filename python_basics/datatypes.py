@@ -66,6 +66,9 @@ def main():
     my_var: int | float = 15  # Can be either int or float
     print(f"Union type hint: {my_var} (type: {type(my_var)})")
 
+    # Common useful methods for characters
+    print(ord('a'))  # Output: 97
+    print(chr(97))  # Output: 'a'
 
 if __name__ == "__main__":
     main()
