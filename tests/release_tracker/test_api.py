@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 def test_create_project(client: TestClient):
     response = client.post(
-        "/projects",
+        "/projects/",
         json={
             "name": "New Project",
             "description": "A test project",
@@ -25,7 +25,7 @@ def test_get_project(client: TestClient, sample_project_id: int):
 
 
 def test_list_projects(client: TestClient, sample_project_id: int):
-    response = client.get("/projects")
+    response = client.get("/projects/")
     assert response.status_code == 200
     data = response.json()
     assert len(data) > 0
@@ -49,3 +49,19 @@ def test_delete_project(client: TestClient, sample_project_id: int):
 
     response = client.get(f"/projects/{sample_project_id}")
     assert response.status_code == 404
+
+
+def test_create_duplicate_project_fails(
+    client: TestClient, sample_project_id: int
+):
+    response = client.post(
+        "/projects/",
+        json={
+            "name": "Release Platform",  # Same name as sample_project_id
+            "description": "Another description",
+        },
+    )
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "Data conflict occurred (e.g., duplicate entry)."
+    }
